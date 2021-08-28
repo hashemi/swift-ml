@@ -7,22 +7,23 @@ extension Real {
 }
 
 // [layer][target node][source node]
+// bias for a target node is last weight in the innermost array
 // 3 layers: input (8 nodes), hidden (3 nodes), output (8 nodes)
 var weights = [
     (0..<3).map { _ in
-        (0..<8).map { _ in
+        (0..<(8 + 1)).map { _ in
             Double.random(in: -0.1...0.1)
         }
     },
     (0..<8).map { _ in
-        (0..<3).map { _ in
+        (0..<(3 + 1)).map { _ in
             Double.random(in: -0.1...0.1)
         }
     }
 ]
 
-let learningRate = 0.1
-let numIterations = 10000
+let learningRate = 0.3
+let numIterations = 5000
 let trainingExamples = [
     [1.0, 0, 0, 0, 0, 0, 0, 0],
     [0, 1.0, 0, 0, 0, 0, 0, 0],
@@ -38,7 +39,7 @@ func forward(inputs: [Double], weights: [[Double]]) -> [Double] {
     weights.map { nodeWeights in
         zip(inputs, nodeWeights)
             .map(*)
-            .reduce(0, +)
+            .reduce(0, +) + nodeWeights.last!
     }.map(Double.sigmoid)
 }
 
@@ -62,12 +63,14 @@ for _ in 0..<numIterations {
             for i in 0..<8 {
                 weights[0][j][i] += learningRate * hiddenErrors[j] * xs[i]
             }
+            weights[0][j][8] += learningRate * hiddenErrors[j]
         }
         
         for j in 0..<8 {
             for i in 0..<3 {
                 weights[1][j][i] += learningRate * outputErrors[j] * hidden[i]
             }
+            weights[1][j][3] += learningRate * outputErrors[j]
         }
     }
 }
